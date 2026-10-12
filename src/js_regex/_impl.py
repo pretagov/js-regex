@@ -225,9 +225,12 @@ def check_features(parsed: Any, flags: int, pattern: str) -> None:
             # Various groups: '(...)', '(:...)' or '(?P<name>...)'
             # The parser converts group names to numbers, so the `_` doesn't help here
             check_features(value[-1], flags=flags, pattern=pattern)
-            if python_version >= (3, 6) and (value[1] | value[2]):  # pragma: no cover
+            # ES2025 RegExp modifiers allow (?i:...), (?-i:...), (?ims-ims:...) - add or
+            # remove the i, m and s flags for a group. Any other flag is still not Javascript.
+            modifiers = re.IGNORECASE | re.MULTILINE | re.DOTALL
+            if python_version >= (3, 6) and (value[1] | value[2]) & ~modifiers:  # pragma: no cover
                 raise NotJavascriptRegex(
-                    "Javascript regular expressions do not support "
+                    "Javascript regular expressions only support the i, m and s "
                     "subpattern flags (pattern={pattern!r})"
                 )
         elif code == sre_constants.AT:
